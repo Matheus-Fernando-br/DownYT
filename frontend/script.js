@@ -5,11 +5,10 @@ async function buscar() {
     const result = document.getElementById("result");
     const loader = document.getElementById("loader");
 
-    // Esconde a section toda vez que clicar em pesquisar
     result.style.display = "none";
 
     if (!url) {
-        alert("Cole um link do YouTube");
+        alert("Erro: cole um link válido do YouTube.");
         return;
     }
 
@@ -22,33 +21,61 @@ async function buscar() {
             body: JSON.stringify({ url })
         });
 
-        if (!res.ok) throw new Error("Erro ao buscar vídeo");
-
         const data = await res.json();
+
+        if (!res.ok) {
+            alert(`Erro: ${data.error}`);
+            return;
+        }
 
         document.getElementById("thumb").src = data.thumbnail;
         document.getElementById("title").innerText = data.title;
-        document.getElementById("duration").innerText = data.duration;
+        document.getElementById("duration").innerText = "";
 
-        if (data.playlist) {
-            document.getElementById("playlistInfo").innerText =
-                `Playlist com ${data.count} vídeos`;
-        } else {
-            document.getElementById("playlistInfo").innerText = "";
-        }
-
-        // MOSTRA a section SOMENTE agora
         result.style.display = "flex";
 
-    } catch (err) {
-        alert("Erro ao buscar informações do vídeo");
+    } catch {
+        alert("Erro de conexão com o servidor.");
     } finally {
         loader.hidden = true;
     }
 }
 
-function download(type) {
+async function download(type) {
     const url = document.getElementById("url").value;
-    window.location.href =
-        `${API_URL}/download?type=${type}&url=${encodeURIComponent(url)}`;
+
+    const confirmar = confirm(
+        `Confirmar download em formato ${type === "audio" ? "ÁUDIO (MP3)" : "VÍDEO (MP4)"}?`
+    );
+
+    if (!confirmar) return;
+
+    try {
+        const res = await fetch(`${API_URL}/download`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url, type })
+        });
+
+        if (!res.ok) {
+            const data = await res.json();
+            alert(`Erro: ${data.error}`);
+            return;
+        }
+
+        // 🔥 força download
+        const blob = await res.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "DownYT";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        alert("Download concluído com sucesso!");
+        location.reload();
+
+    } catch {
+        alert("Erro ao realizar o download.");
+    }
 }
