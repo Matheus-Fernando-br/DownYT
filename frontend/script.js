@@ -1,5 +1,18 @@
 const API_URL = "https://downyt-f9ul.onrender.com";
 
+const messages = [
+    "Baixe vídeos e músicas do YouTube com máxima qualidade",
+    "DownYT é rápido, simples e sem complicações",
+    "Suporte a vídeos individuais e playlists completas",
+    "Escolha entre áudio MP3 ou vídeo MP4",
+    "Tudo online, sem instalar nada no seu computador",
+    "Perfeito para estudos, trabalho ou lazer",
+    "DownYT — seu downloader inteligente"
+];
+
+let messageIndex = 0;
+
+
 async function buscar() {
     const url = document.getElementById("url").value.trim();
     const result = document.getElementById("result");
@@ -78,4 +91,31 @@ async function download(type) {
     } catch {
         alert("Erro ao realizar o download.");
     }
+
+    
+    
 }
+
+function startMessages() {
+    const section = document.getElementById("messages");
+    const text = document.getElementById("messageText");
+
+    text.innerText = messages[0];
+    section.classList.add("show");
+
+    setInterval(() => {
+        section.classList.remove("show");
+        section.classList.add("hide");
+
+        setTimeout(() => {
+            messageIndex = (messageIndex + 1) % messages.length;
+            text.innerText = messages[messageIndex];
+
+            section.classList.remove("hide");
+            section.classList.add("show");
+        }, 1000);
+
+    }, 5000);
+}
+
+document.addEventListener("DOMContentLoaded", startMessages);

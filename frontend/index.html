@@ -4,19 +4,30 @@
     <meta charset="UTF-8">
     <title>DownYT</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="/frontend/logo.png">
+    <link rel="icon" href="/logo.png">
 
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<h1>DownYT</h1>
+<h1>Down<span>YT</span></h1>
 
 <div class="search-box">
     <input id="url" type="text" placeholder="Cole aqui o link do vídeo ou playlist do YouTube">
     <button onclick="buscar()">🔍</button>
 </div>
 
-<div id="loader" hidden>🔄 Buscando informações...</div>
+<div id="loader" hidden>
+    <p class="loading">🔄 Buscando informações<span></span></p>
+    <div class="progress-bar">
+        <div class="progress"></div>
+    </div>
+</div>
+
+
 
 <section class="result" id="result" style="display: none;">
 
@@ -35,6 +46,9 @@
         <button onclick="download('audio')">🎵 Baixar Música</button>
     </div>
 
+</section>
+<section class="message" id="messages">
+    <p id="messageText"></p>
 </section>
 
 <script src="script.js"></script>

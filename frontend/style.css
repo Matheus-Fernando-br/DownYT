@@ -3,48 +3,143 @@ body {
     background: #0f172a;
     color: #fff;
     text-align: center;
-    padding: 40px;
+    padding-left: 8vw;
+    padding-right: 8vw;
+    padding-top: 2vw;
+    padding-bottom: 2vw;
 }
 
+/* Header Section */
 h1 {
-    font-size: 48px;
-    margin-bottom: 30px;
+    font-size: 5rem;
+    font-family: "Zen Dots", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    margin-bottom: 5vh;
 }
 
+h1 span {
+    animation: redPulse 7s infinite ease-in-out;
+}
+
+@keyframes redPulse {
+    0%, 100% {
+        color: #fff;
+        text-shadow: 0 0 10px #ff000009, 0 0 20px #ff000009, 0 0 30px #ff000009;
+    }
+    50% {
+        color: #fff;
+        text-shadow: 0 0 20px #ff0000, 0 0 30px #ff0000, 0 0 40px #ff0000;
+    }
+}
+
+/* Search Box */
 .search-box {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 1vw;
 }
 
 .search-box input {
-    width: 420px;
-    padding: 12px;
+    width: 40vw;
+    padding: 1vw;
     border-radius: 6px;
     border: none;
 }
 
+/* Button Pesquisar */
 .search-box button {
-    padding: 12px 20px;
+    padding: 2vh 2vw;
+    font-size: .9rem;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.3s ease-in-out;
 }
 
 .search-box button:hover {
+    font-size: 1.05rem;
     transform: scale(1.1);
     background-color: #ff000086;
 }
 
+/* Loading com barra de progresso */
 #loader {
-    margin-top: 20px;
+    margin-top: 5vh;
+    font-family: "Fugaz One", sans-serif;
+    font-size: 1.2rem;
+
+    width: min(20vw, 320px);
+    padding: 3vw;
+
+    margin-left: auto;
+    margin-right: auto;
+
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.25);
+
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+.loading span::after {
+    content: "";
+    animation: dots 2s infinite steps(3, end);
+}
+
+@keyframes dots {
+    0% {
+        content: "";
+    }
+    25% {
+        content: ".";
+    }
+    50% {
+        content: "..";
+    }
+    75% {
+        content: "...";
+    }
+    100% {
+        content: "...";
+    }
+}
+
+.progress-bar {
+    width: 20vw;
+    height: 2vh;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    margin: 12px auto 0;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #a6ff00, #00ff15);
+    border-radius: 10px;
+    animation: loading 14s infinite ease-in-out;
+}
+
+@keyframes loading {
+    0% {
+        width: 0%;
+    }
+
+    100% {
+        width: 100%;
+    }
+}
+
+
+/* Result Section */
 .result {
     display: flex;
     justify-content: center;
     margin-top: 40px;
     gap: 50px;
     animation: fadeSlide 0.6s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes fadeSlide {
@@ -90,3 +185,24 @@ h1 {
     transform: scale(1.05);
     background-color: #cec7c7;
 }
+
+/* Message Section */
+.message {
+    margin-top: 10vh;
+    font-family: "Fugaz One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 1.2rem;
+    min-height: 40px;
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+}
+
+.message.show {
+    opacity: 1;
+}
+
+.message.hide {
+    opacity: 0;
+}
+
