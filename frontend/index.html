@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>DownYT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>DownYT</h1>
+
+<div class="search-box">
+    <input id="url" type="text" placeholder="Cole aqui o link do vídeo ou playlist do YouTube">
+    <button onclick="buscar()">🔍</button>
+</div>
+
+<div id="loader" hidden>🔄 Buscando informações...</div>
+
+<section class="result" id="result" hidden>
+
+    <div class="left">
+        <div class="thumb">
+            <img id="thumb">
+            <span id="duration"></span>
+        </div>
+        <h3 id="title"></h3>
+        <p id="playlistInfo"></p>
+    </div>
+
+    <div class="right">
+        <h2>Escolha o que deseja baixar</h2>
+        <button onclick="download('video')">🎥 Baixar Vídeo</button>
+        <button onclick="download('audio')">🎵 Baixar Música</button>
+    </div>
+
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>
