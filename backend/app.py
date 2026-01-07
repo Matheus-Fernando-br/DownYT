@@ -12,7 +12,7 @@ CORS(app)
 BASE_PATH = "downloads"
 os.makedirs(BASE_PATH, exist_ok=True)
 
-# 🔹 BUSCAR INFO
+
 @app.route("/info", methods=["POST"])
 def info():
     data = request.get_json()
@@ -38,11 +38,10 @@ def info():
             "thumbnail": info["thumbnail"]
         })
 
-    except Exception:
+    except:
         return jsonify({"error": "Link inválido ou não suportado"}), 400
 
 
-# 🔹 DOWNLOAD + ZIP
 @app.route("/download", methods=["POST"])
 def download():
     data = request.get_json()
@@ -59,40 +58,32 @@ def download():
     try:
         if tipo == "audio":
             ydl_opts = {
-                "format": "bestaudio",
-                "outtmpl": f"{temp_path}/%(title)s.%(ext)s",
-                "postprocessors": [{
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "320",
-                }]
+                "format": "bestaudio/best",
+                "outtmpl": f"{temp_path}/%(title)s.%(ext)s"
             }
         else:
             ydl_opts = {
                 "format": "bestvideo+bestaudio/best",
-                "merge_output_format": "mp4",
-                "outtmpl": f"{temp_path}/%(title)s.%(ext)s"
+                "outtmpl": f"{temp_path}/%(title)s.%(ext)s",
+                "merge_output_format": "mp4"
             }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
 
-        # 🔥 SE FOR PLAYLIST → ZIP
+        # 🔥 PLAYLIST → ZIP
         if "entries" in info:
             zip_path = f"{BASE_PATH}/{uid}.zip"
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                for root, _, files in os.walk(temp_path):
-                    for file in files:
-                        full_path = os.path.join(root, file)
-                        zipf.write(full_path, arcname=file)
+                for file in os.listdir(temp_path):
+                    zipf.write(os.path.join(temp_path, file), file)
 
             shutil.rmtree(temp_path)
             return send_file(zip_path, as_attachment=True)
 
         # 🔹 VÍDEO ÚNICO
-        files = os.listdir(temp_path)
-        file_path = os.path.join(temp_path, files[0])
-        return send_file(file_path, as_attachment=True)
+        file = os.listdir(temp_path)[0]
+        return send_file(os.path.join(temp_path, file), as_attachment=True)
 
     except Exception as e:
         shutil.rmtree(temp_path, ignore_errors=True)
