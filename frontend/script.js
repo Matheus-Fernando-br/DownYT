@@ -6,7 +6,7 @@ const messages = [
     "Suporte a vídeos individuais e playlists completas",
     "Escolha entre áudio MP3 ou vídeo MP4",
     "Tudo online, sem instalar nada no seu computador",
-    "Perfeito para estudos, trabalho ou lazer",
+    "Sem anuncios, sem taxas, 100% gratuito",
     "DownYT — seu downloader inteligente"
 ];
 
@@ -91,8 +91,6 @@ async function download(type) {
     } catch {
         alert("Erro ao realizar o download.");
     }
-
-    
     
 }
 
