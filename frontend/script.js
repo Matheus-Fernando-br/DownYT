@@ -1,13 +1,10 @@
 const API_URL = "https://downyt-f9ul.onrender.com";
 
 const messages = [
-    "Baixe vídeos e músicas do YouTube com máxima qualidade",
-    "DownYT é rápido, simples e sem complicações",
-    "Suporte a vídeos individuais e playlists completas",
-    "Escolha entre áudio MP3 ou vídeo MP4",
-    "Tudo online, sem instalar nada no seu computador",
-    "Sem anuncios, sem taxas, 100% gratuito",
-    "DownYT — seu downloader inteligente"
+    "Baixe vídeos e reels do Instagram",
+    "Simples, rápido e gratuito",
+    "Funciona com posts e reels públicos",
+    "Sem instalar nada"
 ];
 
 let messageIndex = 0;
@@ -20,8 +17,8 @@ async function buscar() {
 
     result.style.display = "none";
 
-    if (!url.includes("youtube.com") && !url.includes("youtu.be")) {
-        alert("Cole um link válido do YouTube.");
+    if (!url.includes("instagram.com")) {
+        alert("Cole um link válido do Instagram.");
         return;
     }
 
@@ -37,9 +34,7 @@ async function buscar() {
 
         const data = await res.json();
 
-        if (!res.ok) {
-            throw new Error(data.error || "Erro ao buscar vídeo");
-        }
+        if (!res.ok) throw new Error(data.error);
 
         document.getElementById("thumb").src = data.thumbnail;
         document.getElementById("title").innerText = data.title;
@@ -53,7 +48,7 @@ async function buscar() {
     }
 }
 
-async function download(type) {
+async function download() {
 
     const url = document.getElementById("url").value.trim();
     const loader = document.getElementById("loader");
@@ -64,48 +59,30 @@ async function download(type) {
     progressBar.style.width = "0%";
     progressText.innerText = "0%";
 
-    try {
+    const res = await fetch(`${API_URL}/download`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+    });
 
-        const res = await fetch(`${API_URL}/download`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url, type })
-        });
+    const data = await res.json();
+    const pid = data.progress_id;
 
-        const data = await res.json();
+    const source = new EventSource(`${API_URL}/progress/${pid}`);
 
-        if (!res.ok) {
-            throw new Error(data.error || "Erro ao iniciar download");
-        }
+    source.onmessage = (event) => {
 
-        const pid = data.progress_id;
+        const { progress } = JSON.parse(event.data);
 
-        const source = new EventSource(`${API_URL}/progress/${pid}`);
+        progressBar.style.width = progress + "%";
+        progressText.innerText = progress + "%";
 
-        source.onmessage = (event) => {
-
-            const { progress } = JSON.parse(event.data);
-
-            progressBar.style.width = progress + "%";
-            progressText.innerText = progress + "%";
-
-            if (parseFloat(progress) >= 100) {
-                source.close();
-                loader.hidden = true;
-                alert("Download finalizado!");
-            }
-        };
-
-        source.onerror = () => {
+        if (progress >= 100) {
             source.close();
             loader.hidden = true;
-            alert("Erro ao acompanhar download.");
-        };
-
-    } catch (err) {
-        loader.hidden = true;
-        alert(err.message);
-    }
+            window.location.href = `${API_URL}/file/${pid}`;
+        }
+    };
 }
 
 function startMessages() {
@@ -135,3 +112,4 @@ function startMessages() {
 }
 
 document.addEventListener("DOMContentLoaded", startMessages);
+    

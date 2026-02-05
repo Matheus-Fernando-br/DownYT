@@ -1,48 +1,90 @@
-# DownYT 🎬🎵
+# DownIG 📸
 
-DownYT é um site para download de vídeos e músicas do YouTube,
-com suporte a vídeos individuais e playlists, utilizando a melhor
-qualidade disponível.
-
----
-
-## 🧱 Estrutura do Projeto
-
-DownYT/
-├── frontend/ → Vercel
-├── backend/ → Render
-└── README.md
-
+Downloader de posts e reels públicos do Instagram.
 
 ---
 
 ## 🚀 Tecnologias
 
 - Frontend: HTML, CSS, JavaScript
-- Backend: Python + Flask
-- Download: yt-dlp
-- Hospedagem:
+- Backend: Flask
+- Downloader: yt-dlp
+- Deploy:
   - Frontend → Vercel
   - Backend → Render
+
+---
+
+## 📦 Funcionalidades
+
+✅ Download de reels  
+✅ Download de vídeos de posts  
+✅ Preview com thumbnail  
+✅ Barra de progresso em tempo real  
 
 ---
 
 ## 🌐 Deploy
 
 ### Frontend (Vercel)
-- Root Directory: `frontend`
-- Framework: Other
-- Build Command: nenhum
-- Output: `frontend`
+
+- Root: frontend
+- Build: nenhum
 
 ### Backend (Render)
-- Root Directory: `backend`
-- Build: `pip install -r requirements.txt`
-- Start: `python app.py`
+
+- Root: backend
+- Build:
+# DownIG 📸
+
+Downloader de posts e reels públicos do Instagram.
+
+---
+
+## 🚀 Tecnologias
+
+- Frontend: HTML, CSS, JavaScript
+- Backend: Flask
+- Downloader: yt-dlp
+- Deploy:
+  - Frontend → Vercel
+  - Backend → Render
+
+---
+
+## 📦 Funcionalidades
+
+✅ Download de reels  
+✅ Download de vídeos de posts  
+✅ Preview com thumbnail  
+✅ Barra de progresso em tempo real  
+
+---
+
+## 🌐 Deploy
+
+### Frontend (Vercel)
+
+- Root: frontend
+- Build: nenhum
+
+### Backend (Render)
+
+- Root: backend
+- Build:
+pip install -r requirements.txt
+- Start:
+gunicorn app:app
+
+---
+
+## ⚠️ Limitações
+
+- Apenas conteúdo público
+- Perfis privados não funcionam
 
 ---
 
 ## ⚠️ Aviso Legal
 
-Este projeto é apenas para fins educacionais.
-O usuário é responsável pelo uso dos arquivos baixados.
+Uso educacional. O usuário é responsável pelos arquivos baixados.
