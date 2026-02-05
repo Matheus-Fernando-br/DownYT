@@ -1,9 +1,8 @@
-from flask import Flask, request, jsonify, send_file, Response
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import yt_dlp
 import os
 import uuid
-import shutil
 import json
 import threading
 import time
@@ -14,15 +13,42 @@ CORS(app)
 BASE_PATH = "downloads"
 os.makedirs(BASE_PATH, exist_ok=True)
 
-# Guarda progresso em memória
 progress_store = {}
 
 # =========================
-# yt-dlp com hook de progresso
+# CONFIG GLOBAL yt-dlp (ANTI BLOQUEIO)
+# =========================
+def base_ydl_opts():
+
+    return {
+        "quiet": True,
+        "no_warnings": True,
+
+        # força cliente mobile
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
+        },
+
+        # headers reais
+        "http_headers": {
+            "User-Agent": "com.google.android.youtube/17.31.35 (Linux; U; Android 11)",
+            "Accept-Language": "pt-BR,pt;q=0.9"
+        },
+
+        # retry automático
+        "retries": 5,
+        "fragment_retries": 5,
+    }
+
+
+# =========================
+# HOOK PROGRESSO
 # =========================
 def get_ydl_opts(progress_id, extra_opts=None):
 
-    def progress_hook(d):
+    def hook(d):
         if d["status"] == "downloading":
             percent = d.get("_percent_str", "0%").replace("%", "").strip()
             progress_store[progress_id] = percent
@@ -30,11 +56,8 @@ def get_ydl_opts(progress_id, extra_opts=None):
         elif d["status"] == "finished":
             progress_store[progress_id] = "100"
 
-    opts = {
-        "quiet": True,
-        "no_warnings": True,
-        "progress_hooks": [progress_hook],
-    }
+    opts = base_ydl_opts()
+    opts["progress_hooks"] = [hook]
 
     if extra_opts:
         opts.update(extra_opts)
@@ -43,7 +66,7 @@ def get_ydl_opts(progress_id, extra_opts=None):
 
 
 # =========================
-# SSE – envia progresso
+# SSE PROGRESSO
 # =========================
 @app.route("/progress/<pid>")
 def progress(pid):
@@ -66,10 +89,11 @@ def progress(pid):
 
 
 # =========================
-# INFO (buscar dados)
+# INFO VIDEO
 # =========================
 @app.route("/info", methods=["POST"])
 def info():
+
     data = request.get_json()
     url = data.get("url")
 
@@ -77,7 +101,8 @@ def info():
         return jsonify({"error": "Link inválido"}), 400
 
     try:
-        with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+
+        with yt_dlp.YoutubeDL(base_ydl_opts()) as ydl:
             info = ydl.extract_info(url, download=False)
 
         return jsonify({
@@ -88,11 +113,11 @@ def info():
 
     except Exception as e:
         print("INFO ERROR:", e)
-        return jsonify({"error": "Link inválido ou bloqueado"}), 400
+        return jsonify({"error": "YouTube bloqueou temporariamente. Tente outro vídeo."}), 400
 
 
 # =========================
-# DOWNLOAD (inicia download)
+# DOWNLOAD
 # =========================
 @app.route("/download", methods=["POST"])
 def download():
@@ -112,21 +137,26 @@ def download():
 
     def worker():
         try:
+
             if tipo == "audio":
+
                 opts = get_ydl_opts(progress_id, {
                     "format": "bestaudio/best",
                     "outtmpl": os.path.join(temp_path, "%(title)s.%(ext)s"),
+
                     "postprocessors": [{
                         "key": "FFmpegExtractAudio",
                         "preferredcodec": "mp3",
                         "preferredquality": "320",
-                    }],
+                    }]
                 })
+
             else:
+
                 opts = get_ydl_opts(progress_id, {
                     "format": "bestvideo+bestaudio/best",
-                    "outtmpl": os.path.join(temp_path, "%(title)s.%(ext)s"),
                     "merge_output_format": "mp4",
+                    "outtmpl": os.path.join(temp_path, "%(title)s.%(ext)s")
                 })
 
             with yt_dlp.YoutubeDL(opts) as ydl:
@@ -142,7 +172,7 @@ def download():
 
 
 # =========================
-# START
+# START SERVER
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
