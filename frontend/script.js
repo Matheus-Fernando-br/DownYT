@@ -12,22 +12,23 @@ const messages = [
 
 let messageIndex = 0;
 
-
 async function buscar() {
+
     const url = document.getElementById("url").value.trim();
     const result = document.getElementById("result");
     const loader = document.getElementById("loader");
 
     result.style.display = "none";
 
-    if (!url) {
-        alert("Erro: cole um link válido do YouTube.");
+    if (!url.includes("youtube.com") && !url.includes("youtu.be")) {
+        alert("Cole um link válido do YouTube.");
         return;
     }
 
     loader.hidden = false;
 
     try {
+
         const res = await fetch(`${API_URL}/info`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -37,18 +38,16 @@ async function buscar() {
         const data = await res.json();
 
         if (!res.ok) {
-            alert(`Erro: ${data.error}`);
-            return;
+            throw new Error(data.error || "Erro ao buscar vídeo");
         }
 
         document.getElementById("thumb").src = data.thumbnail;
         document.getElementById("title").innerText = data.title;
-        document.getElementById("duration").innerText = "";
 
         result.style.display = "flex";
 
-    } catch {
-        alert("Erro de conexão com o servidor.");
+    } catch (err) {
+        alert(err.message);
     } finally {
         loader.hidden = true;
     }
@@ -56,7 +55,7 @@ async function buscar() {
 
 async function download(type) {
 
-    const url = document.getElementById("url").value;
+    const url = document.getElementById("url").value.trim();
     const loader = document.getElementById("loader");
     const progressBar = document.querySelector(".progress");
     const progressText = document.getElementById("progressText");
@@ -65,33 +64,52 @@ async function download(type) {
     progressBar.style.width = "0%";
     progressText.innerText = "0%";
 
-    const res = await fetch(`${API_URL}/download`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, type })
-    });
+    try {
 
-    const data = await res.json();
-    const pid = data.progress_id;
+        const res = await fetch(`${API_URL}/download`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url, type })
+        });
 
-    const source = new EventSource(`${API_URL}/progress/${pid}`);
+        const data = await res.json();
 
-    source.onmessage = (event) => {
+        if (!res.ok) {
+            throw new Error(data.error || "Erro ao iniciar download");
+        }
 
-        const { progress } = JSON.parse(event.data);
+        const pid = data.progress_id;
 
-        progressBar.style.width = progress + "%";
-        progressText.innerText = progress + "%";
+        const source = new EventSource(`${API_URL}/progress/${pid}`);
 
-        if (progress >= 100) {
+        source.onmessage = (event) => {
+
+            const { progress } = JSON.parse(event.data);
+
+            progressBar.style.width = progress + "%";
+            progressText.innerText = progress + "%";
+
+            if (parseFloat(progress) >= 100) {
+                source.close();
+                loader.hidden = true;
+                alert("Download finalizado!");
+            }
+        };
+
+        source.onerror = () => {
             source.close();
             loader.hidden = true;
-            alert("Download finalizado!");
-        }
-    };
+            alert("Erro ao acompanhar download.");
+        };
+
+    } catch (err) {
+        loader.hidden = true;
+        alert(err.message);
+    }
 }
 
 function startMessages() {
+
     const section = document.getElementById("messages");
     const text = document.getElementById("messageText");
 
@@ -99,15 +117,18 @@ function startMessages() {
     section.classList.add("show");
 
     setInterval(() => {
+
         section.classList.remove("show");
         section.classList.add("hide");
 
         setTimeout(() => {
+
             messageIndex = (messageIndex + 1) % messages.length;
             text.innerText = messages[messageIndex];
 
             section.classList.remove("hide");
             section.classList.add("show");
+
         }, 1000);
 
     }, 5000);

@@ -6,6 +6,7 @@ import uuid
 import json
 import threading
 import time
+import shutil
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +17,7 @@ os.makedirs(BASE_PATH, exist_ok=True)
 progress_store = {}
 
 # =========================
-# CONFIG GLOBAL yt-dlp (ANTI BLOQUEIO)
+# CONFIG GLOBAL yt-dlp
 # =========================
 def base_ydl_opts():
 
@@ -24,24 +25,23 @@ def base_ydl_opts():
         "quiet": True,
         "no_warnings": True,
 
-        # força cliente mobile
         "extractor_args": {
             "youtube": {
-                "player_client": ["android"]
+                "player_client": ["web"],
+                "skip": ["dash", "hls"]
             }
         },
 
-        # headers reais
         "http_headers": {
-            "User-Agent": "com.google.android.youtube/17.31.35 (Linux; U; Android 11)",
-            "Accept-Language": "pt-BR,pt;q=0.9"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/122.0.0.0 Safari/537.36",
+            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
         },
 
-        # retry automático
-        "retries": 5,
-        "fragment_retries": 5,
+        "nocheckcertificate": True,
+        "ignoreerrors": True
     }
-
 
 # =========================
 # HOOK PROGRESSO
@@ -64,7 +64,6 @@ def get_ydl_opts(progress_id, extra_opts=None):
 
     return opts
 
-
 # =========================
 # SSE PROGRESSO
 # =========================
@@ -73,6 +72,7 @@ def progress(pid):
 
     def stream():
         last = None
+
         while True:
             value = progress_store.get(pid, "0")
 
@@ -80,13 +80,12 @@ def progress(pid):
                 yield f"data: {json.dumps({'progress': value})}\n\n"
                 last = value
 
-            if value == "100":
+            if value in ["100", "error"]:
                 break
 
             time.sleep(0.5)
 
     return Response(stream(), mimetype="text/event-stream")
-
 
 # =========================
 # INFO VIDEO
@@ -94,27 +93,32 @@ def progress(pid):
 @app.route("/info", methods=["POST"])
 def info():
 
-    data = request.get_json()
+    data = request.get_json() or {}
     url = data.get("url")
 
     if not url:
         return jsonify({"error": "Link inválido"}), 400
 
     try:
-
         with yt_dlp.YoutubeDL(base_ydl_opts()) as ydl:
             info = ydl.extract_info(url, download=False)
 
+        if not info:
+            return jsonify({
+                "error": "Não foi possível obter informações do vídeo."
+            }), 429
+
         return jsonify({
-            "title": info.get("title"),
-            "thumbnail": info.get("thumbnail"),
+            "title": info.get("title", "Sem título"),
+            "thumbnail": info.get("thumbnail", ""),
             "playlist": "entries" in info
         })
 
     except Exception as e:
         print("INFO ERROR:", e)
-        return jsonify({"error": "YouTube bloqueou temporariamente. Tente outro vídeo."}), 400
-
+        return jsonify({
+            "error": "YouTube bloqueou temporariamente este servidor. Tente novamente em alguns minutos."
+        }), 429
 
 # =========================
 # DOWNLOAD
@@ -122,7 +126,7 @@ def info():
 @app.route("/download", methods=["POST"])
 def download():
 
-    data = request.get_json()
+    data = request.get_json() or {}
     url = data.get("url")
     tipo = data.get("type")
 
@@ -139,11 +143,9 @@ def download():
         try:
 
             if tipo == "audio":
-
                 opts = get_ydl_opts(progress_id, {
                     "format": "bestaudio/best",
                     "outtmpl": os.path.join(temp_path, "%(title)s.%(ext)s"),
-
                     "postprocessors": [{
                         "key": "FFmpegExtractAudio",
                         "preferredcodec": "mp3",
@@ -152,7 +154,6 @@ def download():
                 })
 
             else:
-
                 opts = get_ydl_opts(progress_id, {
                     "format": "bestvideo+bestaudio/best",
                     "merge_output_format": "mp4",
@@ -164,12 +165,16 @@ def download():
 
         except Exception as e:
             print("DOWNLOAD ERROR:", e)
-            progress_store[progress_id] = "0"
+            progress_store[progress_id] = "error"
+            return
 
-    threading.Thread(target=worker).start()
+        # limpa arquivos depois de 10 minutos
+        time.sleep(600)
+        shutil.rmtree(temp_path, ignore_errors=True)
+
+    threading.Thread(target=worker, daemon=True).start()
 
     return jsonify({"progress_id": progress_id})
-
 
 # =========================
 # START SERVER
