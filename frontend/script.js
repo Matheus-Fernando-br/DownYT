@@ -55,43 +55,40 @@ async function buscar() {
 }
 
 async function download(type) {
+
     const url = document.getElementById("url").value;
+    const loader = document.getElementById("loader");
+    const progressBar = document.querySelector(".progress");
+    const progressText = document.getElementById("progressText");
 
-    const confirmar = confirm(
-        `Confirmar download em formato ${type === "audio" ? "ÁUDIO (MP3)" : "VÍDEO (MP4)"}?`
-    );
+    loader.hidden = false;
+    progressBar.style.width = "0%";
+    progressText.innerText = "0%";
 
-    if (!confirmar) return;
+    const res = await fetch(`${API_URL}/download`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, type })
+    });
 
-    try {
-        const res = await fetch(`${API_URL}/download`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url, type })
-        });
+    const data = await res.json();
+    const pid = data.progress_id;
 
-        if (!res.ok) {
-            const data = await res.json();
-            alert(`Erro: ${data.error}`);
-            return;
+    const source = new EventSource(`${API_URL}/progress/${pid}`);
+
+    source.onmessage = (event) => {
+
+        const { progress } = JSON.parse(event.data);
+
+        progressBar.style.width = progress + "%";
+        progressText.innerText = progress + "%";
+
+        if (progress >= 100) {
+            source.close();
+            loader.hidden = true;
+            alert("Download finalizado!");
         }
-
-        // 🔥 força download
-        const blob = await res.blob();
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "DownYT";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        alert("Download concluído com sucesso!");
-        location.reload();
-
-    } catch {
-        alert("Erro ao realizar o download.");
-    }
-    
+    };
 }
 
 function startMessages() {

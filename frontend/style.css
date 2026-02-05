@@ -123,19 +123,19 @@ h1 span {
     width: 0%;
     background: linear-gradient(90deg, #a6ff00, #00ff15);
     border-radius: 10px;
-    animation: loading 14s infinite ease-in-out;
+    transition: width 0.4s ease;
+
+    position: relative;
 }
 
-@keyframes loading {
-    0% {
-        width: 0%;
-    }
-
-    100% {
-        width: 100%;
-    }
+#progressText {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 0.8rem;
+    top: -22px;
+    color: #fff;
 }
-
 
 /* Result Section */
 .result {
