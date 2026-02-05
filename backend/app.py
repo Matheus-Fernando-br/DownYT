@@ -7,6 +7,7 @@ import yt_dlp
 import json
 import time
 import glob
+import zipfile
 
 app = Flask(__name__)
 CORS(app)
@@ -17,57 +18,56 @@ os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 progress_dict = {}
 file_dict = {}
 
-# ==============================
-# CONFIG yt-dlp (INSTAGRAM)
-# ==============================
-def get_ydl_opts(extra_opts=None):
+# ======================
+# CONFIG YTDLP
+# ======================
+def get_ydl_opts(extra=None):
 
     opts = {
         "quiet": True,
         "nocheckcertificate": True,
-        "ignoreerrors": False,
-
         "http_headers": {
             "User-Agent": "Mozilla/5.0"
         }
     }
 
-    if extra_opts:
-        opts.update(extra_opts)
+    if extra:
+        opts.update(extra)
 
     return opts
 
 
-# ==============================
+# ======================
 # INFO POST
-# ==============================
+# ======================
 @app.route("/info", methods=["POST"])
 def info():
 
     try:
-        data = request.json
-        url = data.get("url")
-
-        if not url or "instagram.com" not in url:
-            return jsonify({"error": "Link inválido do Instagram"}), 400
+        url = request.json.get("url")
 
         with yt_dlp.YoutubeDL(get_ydl_opts()) as ydl:
             info = ydl.extract_info(url, download=False)
 
+        thumb = info.get("thumbnail")
+
+        if not thumb and "entries" in info:
+            thumb = info["entries"][0].get("thumbnail")
+
         return jsonify({
             "title": info.get("title", "Instagram Post"),
-            "thumbnail": info.get("thumbnail")
+            "thumbnail": thumb
         })
 
     except Exception as e:
-        print("INFO ERROR:", e)
-        return jsonify({"error": "Não foi possível obter informações do post."}), 400
+        print(e)
+        return jsonify({"error": "Não foi possível ler o post"}), 400
 
 
-# ==============================
+# ======================
 # DOWNLOAD THREAD
-# ==============================
-def download_thread(url, progress_id):
+# ======================
+def download_thread(url, pid):
 
     def hook(d):
 
@@ -75,85 +75,94 @@ def download_thread(url, progress_id):
             percent = d.get("_percent_str", "0%").replace("%", "").strip()
 
             try:
-                progress_dict[progress_id] = float(percent)
+                progress_dict[pid] = float(percent)
             except:
                 pass
 
         elif d["status"] == "finished":
-            progress_dict[progress_id] = 100
+            progress_dict[pid] = 100
 
-    filename = os.path.join(DOWNLOAD_FOLDER, f"{progress_id}.%(ext)s")
+    folder = os.path.join(DOWNLOAD_FOLDER, pid)
+    os.makedirs(folder, exist_ok=True)
 
     ydl_opts = get_ydl_opts({
-        "format": "best",
-        "outtmpl": filename,
+        "outtmpl": f"{folder}/%(title)s.%(ext)s",
         "progress_hooks": [hook]
     })
 
     try:
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
-        # salva arquivo final
-        files = glob.glob(os.path.join(DOWNLOAD_FOLDER, f"{progress_id}.*"))
-        if files:
-            file_dict[progress_id] = files[0]
+        # verifica quantos arquivos baixou
+        files = glob.glob(f"{folder}/*")
+
+        # se tiver mais de 1 -> zipa
+        if len(files) > 1:
+            zip_path = f"{folder}.zip"
+
+            with zipfile.ZipFile(zip_path, "w") as zipf:
+                for f in files:
+                    zipf.write(f, os.path.basename(f))
+
+            file_dict[pid] = zip_path
+
+        else:
+            file_dict[pid] = files[0]
 
     except Exception as e:
         print("DOWNLOAD ERROR:", e)
-        progress_dict[progress_id] = 100
+        progress_dict[pid] = 100
 
 
-# ==============================
+# ======================
 # START DOWNLOAD
-# ==============================
+# ======================
 @app.route("/download", methods=["POST"])
 def download():
 
-    data = request.json
-    url = data.get("url")
+    url = request.json.get("url")
 
-    if not url:
-        return jsonify({"error": "URL inválida"}), 400
+    pid = str(uuid.uuid4())
+    progress_dict[pid] = 0
 
-    progress_id = str(uuid.uuid4())
-    progress_dict[progress_id] = 0
-
-    thread = threading.Thread(
+    threading.Thread(
         target=download_thread,
-        args=(url, progress_id),
+        args=(url, pid),
         daemon=True
-    )
-    thread.start()
+    ).start()
 
-    return jsonify({"progress_id": progress_id})
+    return jsonify({"progress_id": pid})
 
 
-# ==============================
-# DOWNLOAD FILE
-# ==============================
-@app.route("/file/<progress_id>")
-def file(progress_id):
+# ======================
+# FILE
+# ======================
+@app.route("/file/<pid>")
+def file(pid):
 
-    path = file_dict.get(progress_id)
+    path = file_dict.get(pid)
 
     if not path:
-        return jsonify({"error": "Arquivo não encontrado"}), 404
+        return "Arquivo não encontrado", 404
 
     return send_file(path, as_attachment=True)
 
 
-# ==============================
+# ======================
 # SSE PROGRESS
-# ==============================
-@app.route("/progress/<progress_id>")
-def progress(progress_id):
+# ======================
+@app.route("/progress/<pid>")
+def progress(pid):
 
     def generate():
+
         last = -1
 
         while True:
-            progress = progress_dict.get(progress_id, 0)
+
+            progress = progress_dict.get(pid, 0)
 
             if progress != last:
                 yield f"data: {json.dumps({'progress': progress})}\n\n"
@@ -167,9 +176,9 @@ def progress(progress_id):
     return Response(generate(), mimetype="text/event-stream")
 
 
-# ==============================
+# ======================
 # START SERVER
-# ==============================
+# ======================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
