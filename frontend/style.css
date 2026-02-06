@@ -1,295 +1,62 @@
 body {
+    background: #0a0a0a;
+    color: white;
     font-family: Arial, sans-serif;
-    background: #0f172a;
-    color: #fff;
-    text-align: center;
-    padding-top: 2vw;
-    padding-bottom: 2vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
 .container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-
-/* Header Section */
-h1 {
-    font-size: 5rem;
-    font-family: "Zen Dots", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-    margin-bottom: 5vh;
-}
-
-h1 span {
-    animation: redPulse 7s infinite ease-in-out;
-}
-
-@keyframes redPulse {
-    0%, 100% {
-        color: #fff;
-        text-shadow: 0 0 10px #ff000009, 0 0 20px #ff000009, 0 0 30px #ff000009;
-    }
-    50% {
-        color: #fff;
-        text-shadow: 0 0 20px #ff0000, 0 0 30px #ff0000, 0 0 40px #ff0000;
-    }
-}
-
-/* Search Box */
-.search-box {
-    display: flex;
-    justify-content: center;
-    gap: 1vw;
-}
-
-.search-box input {
-    width: 40vw;
-    padding: 1vw;
-    border-radius: 6px;
-    border: none;
-}
-
-/* Button Pesquisar */
-.search-box button {
-    padding: 2vh 2vw;
-    font-size: .9rem;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-}
-
-.search-box button:hover {
-    font-size: 1.05rem;
-    transform: scale(1.1);
-    background-color: #ff000086;
-}
-
-/* Loading com barra de progresso */
-#loader {
-    margin-top: 5vh;
-    font-family: "Fugaz One", sans-serif;
-    font-size: 1.2rem;
-
-    width: min(20vw, 320px);
-    padding: 3vw;
-
-    margin-left: auto;
-    margin-right: auto;
-
+    background: #111;
+    padding: 40px;
     border-radius: 12px;
-    background: rgba(0, 0, 0, 0.25);
-
-    box-shadow:
-        0 10px 25px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    width: 350px;
+    text-align: center;
+    border: 1px solid #1e90ff44;
 }
 
-.loading span::after {
-    content: "";
-    animation: dots 2s infinite steps(3, end);
+h1 {
+    font-weight: 300;
+    margin-bottom: 20px;
 }
 
-@keyframes dots {
-    0% {
-        content: "";
-    }
-    25% {
-        content: ".";
-    }
-    50% {
-        content: "..";
-    }
-    75% {
-        content: "...";
-    }
-    100% {
-        content: "...";
-    }
+input {
+    margin-bottom: 15px;
+}
+
+button {
+    background: #1e90ff;
+    border: none;
+    padding: 10px 20px;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #63b3ff;
 }
 
 .progress-bar {
-    width: 20vw;
-    height: 2vh;
-    background: rgba(255, 255, 255, 0.2);
+    background: #222;
+    height: 8px;
+    margin-top: 15px;
     border-radius: 10px;
-    margin: 12px auto 0;
     overflow: hidden;
 }
 
-.progress {
+#progress {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #a6ff00, #00ff15);
-    border-radius: 10px;
-    transition: width 0.4s ease;
-
-    position: relative;
+    background: #1e90ff;
+    transition: 0.3s;
 }
 
-#progressText {
-    position: absolute;
-    width: 100%;
-    text-align: center;
-    font-size: 0.8rem;
-    top: -22px;
-    color: #fff;
-}
-
-/* Result Section */
-.result {
-    display: flex;
-    justify-content: center;
-    margin-top: 40px;
-    gap: 50px;
-    animation: fadeSlide 0.6s ease;
-    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.26);
-}
-
-@keyframes fadeSlide {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.thumb {
-    position: relative;
-}
-
-.thumb img {
-    width: 300px;
-    border-radius: 8px;
-}
-
-.thumb span {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    background: rgba(0,0,0,0.7);
-    padding: 4px 6px;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.right button {
-    display: block;
-    width: 220px;
-    padding: 12px;
-    margin: 15px auto;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-
-.right button:hover {
-    transform: scale(1.05);
-    background-color: #cec7c7;
-}
-
-/* Message Section */
-.message {
-    margin-top: 10vh;
-    font-family: "Fugaz One", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-    font-size: 1.2rem;
-    min-height: 40px;
-    opacity: 1;
-    transition: opacity 1s ease-in-out;
-}
-
-.message.show {
-    opacity: 1;
-}
-
-.message.hide {
-    opacity: 0;
-}
-
-/* RESPONSIVIDADE */
-@media (max-width: 900px) {
-
-    .container {
-        padding: 5px;
-        text-align: center;
-    }
-
-    h1 {
-        font-size: 10rem;
-    }
-
-    .search-box {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 25px;
-        width: 100%;
-    }
-
-    .search-box input,
-    .search-box button {
-        width: 100%;
-        max-width: 750px;
-    }
-
-    .search-box input {
-        padding: 60px;
-        font-size: 2.15rem;
-        border-radius: 12px;
-    }
-
-    .search-box button {
-        font-size: 3rem;
-        padding: 30px;
-        background-color: #ff000086;
-        transition: font-size 0.3s ease-in-out;
-    }
-
-    .search-box button:hover {
-        font-size: 2.75rem;
-        transform: scale(0.99);
-    }
-
-    #loader {
-        width: 100%;
-        padding: 20px;
-        padding: 2vw;
-        padding-bottom: 7vw;
-        max-width: 750px;
-    }
-
-    .loading {
-        font-size: 3rem;
-    }
-
-    .progress-bar {
-        width: 80%;
-        height: 14px;
-    }
-
-    .result {
-        flex-direction: column;
-        gap: 30px;
-        padding: 20px;
-    }
-
-    .thumb img {
-        width: 100%;
-        max-width: 320px;
-    }
-
-    .right button {
-        width: 100%;
-        max-width: 300px;
-    }
-
-    .message {
-        font-size: 3rem;
-        margin-top: 15vh;
-    }
+#feedback {
+    margin-top: 15px;
+    color: #63ff9f;
 }

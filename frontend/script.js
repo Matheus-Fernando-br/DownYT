@@ -1,115 +1,76 @@
-const API_URL = "https://downyt-f9ul.onrender.com";
+const API = "https://downyt-f9ul.onrender.com";
 
-const messages = [
-    "Baixe vídeos e reels do Instagram",
-    "Simples, rápido e gratuito",
-    "Funciona com posts e reels públicos",
-    "Sem instalar nada"
-];
+let fileId = null;
 
-let messageIndex = 0;
+const input = document.getElementById("fileInput");
+const convertBtn = document.getElementById("convertBtn");
+const progressBar = document.getElementById("progress");
+const downloadBtn = document.getElementById("downloadBtn");
+const feedback = document.getElementById("feedback");
+const fileInfo = document.getElementById("fileInfo");
 
-async function buscar() {
+input.addEventListener("change", () => {
 
-    const url = document.getElementById("url").value.trim();
-    const result = document.getElementById("result");
-    const loader = document.getElementById("loader");
+    const file = input.files[0];
 
-    result.style.display = "none";
+    if (!file) return;
 
-    if (!url.includes("instagram.com")) {
-        alert("Cole um link válido do Instagram.");
-        return;
-    }
+    fileInfo.innerHTML = `
+        <p><strong>${file.name}</strong></p>
+        <p>${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+    `;
 
-    loader.hidden = false;
+    convertBtn.disabled = false;
+});
 
-    try {
 
-        const res = await fetch(`${API_URL}/info`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url })
-        });
+convertBtn.onclick = async () => {
 
-        const data = await res.json();
+    const file = input.files[0];
 
-        if (!res.ok) throw new Error(data.error);
+    const formData = new FormData();
+    formData.append("file", file);
 
-        document.getElementById("thumb").src = data.thumbnail;
-        document.getElementById("title").innerText = data.title;
-
-        result.style.display = "flex";
-
-    } catch (err) {
-        alert(err.message);
-    } finally {
-        loader.hidden = true;
-    }
-}
-
-async function download() {
-
-    const url = document.getElementById("url").value.trim();
-    const loader = document.getElementById("loader");
-    const progressBar = document.querySelector(".progress");
-    const progressText = document.getElementById("progressText");
-
-    loader.hidden = false;
-    progressBar.style.width = "0%";
-    progressText.innerText = "0%";
-
-    const res = await fetch(`${API_URL}/download`, {
+    const upload = await fetch(`${API}/upload`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url })
+        body: formData
     });
 
-    const data = await res.json();
-    const pid = data.progress_id;
+    const data = await upload.json();
+    fileId = data.file_id;
 
-    const source = new EventSource(`${API_URL}/progress/${pid}`);
+    await fetch(`${API}/convert/${fileId}`, {
+        method: "POST"
+    });
 
-    source.onmessage = (event) => {
+    checkProgress();
+};
 
-        const { progress } = JSON.parse(event.data);
 
-        progressBar.style.width = progress + "%";
-        progressText.innerText = progress + "%";
+async function checkProgress() {
 
-        if (progress >= 100) {
-            source.close();
-            loader.hidden = true;
-            window.location.href = `${API_URL}/file/${pid}`;
+    const interval = setInterval(async () => {
+
+        const res = await fetch(`${API}/progress/${fileId}`);
+        const data = await res.json();
+
+        progressBar.style.width = data.progress + "%";
+
+        if (data.done) {
+            clearInterval(interval);
+
+            downloadBtn.hidden = false;
         }
-    };
+
+    }, 500);
 }
 
-function startMessages() {
 
-    const section = document.getElementById("messages");
-    const text = document.getElementById("messageText");
+downloadBtn.onclick = () => {
 
-    text.innerText = messages[0];
-    section.classList.add("show");
+    window.open(`${API}/download/${fileId}`);
 
-    setInterval(() => {
+    feedback.innerText = "Vídeo convertido com sucesso!";
 
-        section.classList.remove("show");
-        section.classList.add("hide");
-
-        setTimeout(() => {
-
-            messageIndex = (messageIndex + 1) % messages.length;
-            text.innerText = messages[messageIndex];
-
-            section.classList.remove("hide");
-            section.classList.add("show");
-
-        }, 1000);
-
-    }, 5000);
-}
-
-document.addEventListener("DOMContentLoaded", startMessages);
-    
+    setTimeout(() => location.reload(), 2000);
+};
