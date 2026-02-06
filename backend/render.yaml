@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: downyt-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+
+    aptPackages:
+      - ffmpeg
