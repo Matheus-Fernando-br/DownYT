@@ -92,7 +92,12 @@ def download(file_id):
     if not data or not os.path.exists(data["output"]):
         return jsonify({"error": "Arquivo não existe"}), 404
 
-    return send_file(data["output"], as_attachment=True)
+    return send_file(
+    data["output"],
+    as_attachment=True,
+    download_name="audio.mp3"
+)
+
 
 
 if __name__ == "__main__":

@@ -12,19 +12,26 @@
 
 <div class="container">
 
-    <h1>Conversor Video → MP3</h1>
-    
-    <input type="file" id="fileInput" accept="video/*">
+    <h1>Video → MP3</h1>
+
+    <div class="drop-zone" id="dropZone">
+        Arraste seu vídeo ou clique para selecionar
+        <input type="file" id="fileInput" accept="video/*" hidden>
+    </div>
+
+    <video id="preview" class="video-preview" controls hidden></video>
 
     <div id="fileInfo"></div>
 
-    <button id="convertBtn" disabled>Converter</button>
+    <button id="convertBtn" disabled class="download-btn">Converter</button>
+
+    <button id="downloadBtn" hidden class="download-btn">Baixar MP3</button>
+
+    <button id="cancelBtn" class="cancel-btn" hidden>Cancelar</button>
 
     <div class="progress-bar">
         <div id="progress"></div>
     </div>
-
-    <button id="downloadBtn" hidden>Baixar MP3</button>
 
     <div id="feedback"></div>
 
